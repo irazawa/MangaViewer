@@ -1,4 +1,4 @@
-# Flask Manga Viewer (Modern UI)
+# Flask Manga Viewer
 
 Features:
 - Accepts only *_typeset.png uploads
