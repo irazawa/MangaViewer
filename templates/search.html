@@ -1,0 +1,289 @@
+{% extends 'layout.html' %}
+{% block content %}
+  <section class="mb-8">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+      <div>
+        <h1 class="text-3xl font-bold mb-2">Search Manga</h1>
+        <p class="text-slate-400">Find your favorite manga series</p>
+      </div>
+      <div class="flex gap-2">
+        <a class="btn flex items-center gap-2" href="{{ url_for('upload') }}">
+          <i class="fa-solid fa-plus"></i>
+          <span class="hidden sm:inline">Upload Manga</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Search Box -->
+    <div class="card p-5 mb-6">
+      <form action="{{ url_for('search') }}" method="get" class="flex flex-col sm:flex-row gap-4">
+        <div class="flex-1 relative">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+          <input 
+            type="text" 
+            name="q" 
+            value="{{ query }}" 
+            placeholder="Search by title, genre, or description..." 
+            class="w-full pl-10 pr-4 py-3 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 focus:border-orange-500 focus:outline-none"
+          >
+        </div>
+        <button type="submit" class="btn flex items-center gap-2 px-6">
+          <i class="fa-solid fa-search"></i>
+          <span>Search</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Search Filters -->
+    <div class="flex flex-wrap items-center gap-4 mb-6">
+      <span class="text-sm text-slate-400">Filters:</span>
+      <div class="flex flex-wrap gap-2">
+        <button class="chip bg-orange-900/30 border-orange-700/50 text-orange-300">All</button>
+        <button class="chip hover:bg-slate-700/50 transition">Title</button>
+        <button class="chip hover:bg-slate-700/50 transition">Genre</button>
+        <button class="chip hover:bg-slate-700/50 transition">Description</button>
+      </div>
+      
+      <div class="ml-auto flex items-center gap-2">
+        <span class="text-sm text-slate-400">Sort by:</span>
+        <select class="bg-slate-800 border border-slate-700 rounded px-3 py-1 text-sm text-slate-300">
+          <option>Relevance</option>
+          <option>Newest</option>
+          <option>Oldest</option>
+          <option>A-Z</option>
+          <option>Most Views</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  {% if query %}
+    <!-- Search Results -->
+    <div class="mb-4 flex items-center justify-between">
+      <p class="text-sm text-slate-400">
+        {% if items %}
+          Found <span class="text-orange-400 font-semibold">{{ meta.total }}</span> results for "<span class="text-orange-400 font-semibold">{{ query }}</span>"
+        {% else %}
+          No results found for "<span class="text-orange-400 font-semibold">{{ query }}</span>"
+        {% endif %}
+      </p>
+    </div>
+
+    {% if items %}
+      <div class="grid grid-cols-1 gap-4">
+        {% for it in items %}
+          <div class="card p-4 hover:border-orange-500/30 transition group">
+            <div class="flex items-start gap-4">
+              <div class="w-16 h-24 flex-shrink-0 rounded-lg overflow-hidden">
+                {% if it.cover_url %}
+                  <img src="{{ it.cover_url }}" alt="cover" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                {% else %}
+                  <div class="w-full h-full bg-slate-800 flex items-center justify-center">
+                    <i class="fa-solid fa-image text-xl text-slate-500"></i>
+                  </div>
+                {% endif %}
+              </div>
+              
+              <div class="flex-1 min-w-0">
+                <a href="{{ url_for('gallery', code=it.code) }}" class="text-lg font-semibold hover:text-orange-400 transition mb-2 block">
+                  {{ it.title }}
+                </a>
+                
+                <div class="flex items-center gap-3 text-xs text-slate-400 mb-3">
+                  <div class="flex items-center gap-1">
+                    <i class="fa-regular fa-clock"></i>
+                    <span>Updated {{ it.latest_mtime | dt }}</span>
+                  </div>
+                  <span>•</span>
+                  <div class="flex items-center gap-1">
+                    <i class="fa-solid fa-file-image"></i>
+                    <span>{{ it.total_pages }} pages</span>
+                  </div>
+                  <span>•</span>
+                  <div class="flex items-center gap-1 text-amber-400">
+                    <i class="fa-solid fa-star"></i>
+                    <span>4.8</span>
+                  </div>
+                </div>
+                
+                {% if it.genres %}
+                  <div class="flex flex-wrap gap-2 mb-3">
+                    {% for g in it.genres %}
+                      <span class="chip bg-slate-800 text-xs">{{ g }}</span>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+                
+                {% if it.description %}
+                  <p class="text-sm text-slate-300 mb-3 line-clamp-2">{{ it.description }}</p>
+                {% endif %}
+                
+                <div class="flex items-center gap-4">
+                  <a href="{{ url_for('gallery', code=it.code) }}" class="text-sm text-orange-400 hover:text-orange-300 transition flex items-center gap-1">
+                    <i class="fa-solid fa-book-open"></i>
+                    Read Now
+                  </a>
+                  <button class="text-sm text-slate-400 hover:text-slate-300 transition flex items-center gap-1">
+                    <i class="fa-regular fa-bookmark"></i>
+                    Bookmark
+                  </button>
+                </div>
+              </div>
+              
+              <div class="hidden md:flex items-center gap-2 text-sm text-slate-400">
+                <div class="flex items-center gap-1">
+                  <i class="fa-solid fa-eye"></i>
+                  <span>1.2k views</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="flex items-center justify-center gap-3 mt-10">
+        {% if meta.has_prev %}
+          <a class="btn-outline flex items-center gap-2" href="?q={{ query }}&page={{ meta.prev_page }}">
+            <i class="fa-solid fa-chevron-left text-xs"></i>
+            <span>Previous</span>
+          </a>
+        {% endif %}
+        
+        <div class="hidden sm:flex items-center gap-1">
+          {% for p in range(1, meta.pages + 1) %}
+            {% if p == meta.page %}
+              <span class="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white">{{ p }}</span>
+            {% else %}
+              <a href="?q={{ query }}&page={{ p }}" class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-slate-700 transition">{{ p }}</a>
+            {% endif %}
+          {% endfor %}
+        </div>
+        
+        <span class="chip sm:hidden">Page {{ meta.page }} of {{ meta.pages }}</span>
+        
+        {% if meta.has_next %}
+          <a class="btn-outline flex items-center gap-2" href="?q={{ query }}&page={{ meta.next_page }}">
+            <span>Next</span>
+            <i class="fa-solid fa-chevron-right text-xs"></i>
+          </a>
+        {% endif %}
+      </div>
+    {% else %}
+      <!-- No Results -->
+      <div class="flex flex-col items-center justify-center py-16 text-center">
+        <div class="w-24 h-24 rounded-full bg-slate-800 flex items-center justify-center mb-6">
+          <i class="fa-solid fa-magnifying-glass text-3xl text-slate-500"></i>
+        </div>
+        <h3 class="text-xl font-semibold mb-2">No results found</h3>
+        <p class="text-slate-400 max-w-md mx-auto mb-6">We couldn't find any manga matching "{{ query }}". Try different keywords or check the spelling.</p>
+        
+        <div class="flex flex-col sm:flex-row gap-3">
+          <a class="btn" href="{{ url_for('upload') }}">Upload Manga</a>
+          <a class="btn-outline" href="{{ url_for('categories') }}">Browse Categories</a>
+          <a class="btn-outline" href="{{ url_for('library') }}">View Library</a>
+        </div>
+        
+        <div class="mt-8">
+          <h4 class="text-sm font-medium text-slate-300 mb-3">Search Tips:</h4>
+          <ul class="text-sm text-slate-400 space-y-1 text-left">
+            <li>• Try more general keywords</li>
+            <li>• Check your spelling</li>
+            <li>• Search by genre (e.g., "action", "romance")</li>
+            <li>• Use the category browser to explore</li>
+          </ul>
+        </div>
+      </div>
+    {% endif %}
+  {% else %}
+    <!-- Empty Search State -->
+    <div class="flex flex-col items-center justify-center py-20 text-center">
+      <div class="w-24 h-24 rounded-full bg-slate-800 flex items-center justify-center mb-6">
+        <i class="fa-solid fa-magnifying-glass text-3xl text-slate-500"></i>
+      </div>
+      <h3 class="text-xl font-semibold mb-2">Search Manga Library</h3>
+      <p class="text-slate-400 max-w-md mx-auto mb-6">Enter keywords to search through our collection of manga. You can search by title, genre, or description.</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div class="card p-4 text-center">
+          <div class="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mx-auto mb-3">
+            <i class="fa-solid fa-font text-orange-400"></i>
+          </div>
+          <h4 class="font-medium mb-2">Search by Title</h4>
+          <p class="text-sm text-slate-400">Find manga by their title or code</p>
+        </div>
+        
+        <div class="card p-4 text-center">
+          <div class="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mx-auto mb-3">
+            <i class="fa-solid fa-tags text-green-400"></i>
+          </div>
+          <h4 class="font-medium mb-2">Search by Genre</h4>
+          <p class="text-sm text-slate-400">Discover manga by genre tags</p>
+        </div>
+        
+        <div class="card p-4 text-center">
+          <div class="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mx-auto mb-3">
+            <i class="fa-solid fa-align-left text-blue-400"></i>
+          </div>
+          <h4 class="font-medium mb-2">Search by Description</h4>
+          <p class="text-sm text-slate-400">Find manga through story descriptions</p>
+        </div>
+      </div>
+      
+      <div class="mb-6">
+        <h4 class="text-sm font-medium text-slate-300 mb-3">Popular Searches:</h4>
+        <div class="flex flex-wrap gap-2 justify-center">
+          <a href="?q=action" class="chip hover:bg-orange-500 hover:text-white transition">Action</a>
+          <a href="?q=adventure" class="chip hover:bg-orange-500 hover:text-white transition">Adventure</a>
+          <a href="?q=romance" class="chip hover:bg-orange-500 hover:text-white transition">Romance</a>
+          <a href="?q=fantasy" class="chip hover:bg-orange-500 hover:text-white transition">Fantasy</a>
+          <a href="?q=comedy" class="chip hover:bg-orange-500 hover:text-white transition">Comedy</a>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <style>
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    
+    input:focus {
+      outline: none;
+      ring: 2px;
+      ring-color: #f97316;
+    }
+  </style>
+
+  <script>
+    // Search functionality enhancements
+    document.addEventListener('DOMContentLoaded', function() {
+      const searchInput = document.querySelector('input[name="q"]');
+      const filterChips = document.querySelectorAll('.chip');
+      
+      // Focus search input on load
+      if (!searchInput.value) {
+        searchInput.focus();
+      }
+      
+      // Filter chip functionality
+      filterChips.forEach(chip => {
+        chip.addEventListener('click', function() {
+          // Remove active class from all chips
+          filterChips.forEach(c => c.classList.remove('bg-orange-900/30', 'border-orange-700/50', 'text-orange-300'));
+          // Add active class to clicked chip
+          this.classList.add('bg-orange-900/30', 'border-orange-700/50', 'text-orange-300');
+        });
+      });
+      
+      // Sort functionality
+      const sortSelect = document.querySelector('select');
+      sortSelect.addEventListener('change', function() {
+        // In real implementation, this would update the search results
+        console.log('Sort by:', this.value);
+      });
+    });
+  </script>
+{% endblock %}

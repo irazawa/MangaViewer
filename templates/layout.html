@@ -1,0 +1,289 @@
+{% set title = title or 'Manga Viewer' %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title }}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50: '#fff7ed',
+              100: '#ffedd5',
+              200: '#fed7aa',
+              300: '#fdba74',
+              400: '#fb923c',
+              500: '#f97316',
+              600: '#ea580c',
+              700: '#c2410c',
+              800: '#9a3412',
+              900: '#7c2d12',
+            },
+            dark: {
+              50: '#f8fafc',
+              100: '#f1f5f9',
+              200: '#e2e8f0',
+              300: '#cbd5e1',
+              400: '#94a3b8',
+              500: '#64748b',
+              600: '#475569',
+              700: '#334155',
+              800: '#1e293b',
+              900: '#0f172a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    
+    body {
+      background: #0f172a;
+      color: #e2e8f0;
+      font-family: 'Inter', ui-sans-serif, system-ui;
+      scroll-behavior: smooth;
+    }
+    
+    .gradient-bg {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    }
+    
+    .nav-gradient {
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    
+    .card {
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+      border-color: rgba(251, 146, 60, 0.3);
+    }
+    
+    .btn {
+      background: #f97316;
+      border-radius: 8px;
+      padding: 0.625rem 1.25rem;
+      color: #fff;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+    
+    .btn:hover {
+      background: #ea580c;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+    }
+    
+    .btn-outline {
+      background: transparent;
+      border: 1px solid #f97316;
+      color: #f97316;
+    }
+    
+    .btn-outline:hover {
+      background: #f97316;
+      color: white;
+    }
+    
+    .chip {
+      font-size: 0.75rem;
+      padding: 0.3rem 0.6rem;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      color: #94a3b8;
+      background: rgba(30, 41, 59, 0.5);
+    }
+    
+    .search-input {
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 0.6rem 1rem;
+      color: #e2e8f0;
+    }
+    
+    .search-input:focus {
+      outline: none;
+      border-color: #f97316;
+    }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1e293b;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+    
+    /* Animation for page transitions */
+    .fade-in {
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="gradient-bg min-h-screen flex flex-col">
+  <!-- Header -->
+  <header class="sticky top-0 z-50 nav-gradient border-b border-slate-700/50 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <!-- Logo -->
+        <a href="{{ url_for('index') }}" class="text-xl font-bold flex items-center gap-2">
+          <i class="fa-solid fa-book-open text-orange-500"></i>
+          <span class="bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-orange-600">MangaViewer</span>
+        </a>
+
+        <!-- Desktop Nav -->
+        <nav class="hidden md:flex gap-3">
+          <a href="{{ url_for('index') }}" class="px-3 py-2 rounded-md text-sm font-medium hover:text-orange-400 transition">Home</a>
+          <a href="{{ url_for('library') }}" class="px-3 py-2 rounded-md text-sm font-medium hover:text-orange-400 transition">Library</a>
+          <a href="{{ url_for('categories') }}" class="px-3 py-2 rounded-md text-sm font-medium hover:text-orange-400 transition">Categories</a>
+          <a href="{{ url_for('latest') }}" class="px-3 py-2 rounded-md text-sm font-medium hover:text-orange-400 transition">Latest</a>
+        </nav>
+
+        <!-- Right -->
+        <div class="flex items-center gap-3">
+          <!-- Desktop Search -->
+          <div class="hidden md:block relative">
+            <form action="{{ url_for('search') }}" method="get">
+              <input type="text" name="q" placeholder="Search manga..." class="search-input w-64 pr-10" value="{{ request.args.get('q', '') }}">
+              <button type="submit" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400">
+                <i class="fa-solid fa-magnifying-glass"></i>
+              </button>
+            </form>
+          </div>
+          <a class="btn hidden sm:flex items-center gap-2" href="{{ url_for('upload') }}">
+            <i class="fa-solid fa-cloud-upload-alt"></i>
+            <span>Upload</span>
+          </a>
+          <!-- Hamburger -->
+          <button class="md:hidden p-2 rounded-md text-slate-300 hover:text-orange-400" id="mobile-menu-btn">
+            <i class="fa-solid fa-bars text-xl"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Nav -->
+    <div id="mobile-menu" class="hidden md:hidden px-4 pb-4 space-y-2 border-t border-slate-700">
+      <a href="{{ url_for('index') }}" class="block py-2 text-sm hover:text-orange-400">Home</a>
+      <a href="{{ url_for('library') }}" class="block py-2 text-sm hover:text-orange-400">Library</a>
+      <a href="{{ url_for('categories') }}" class="block py-2 text-sm hover:text-orange-400">Categories</a>
+      <a href="{{ url_for('latest') }}" class="block py-2 text-sm hover:text-orange-400">Latest</a>
+      <form action="{{ url_for('search') }}" method="get" class="mt-3">
+        <input type="text" name="q" placeholder="Search manga..." class="search-input w-full">
+      </form>
+      <a class="btn w-full flex justify-center mt-3" href="{{ url_for('upload') }}">
+        <i class="fa-solid fa-cloud-upload-alt mr-2"></i> Upload
+      </a>
+    </div>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const btn = document.getElementById("mobile-menu-btn");
+        const menu = document.getElementById("mobile-menu");
+        btn.addEventListener("click", () => {
+          menu.classList.toggle("hidden");
+        });
+      });
+    </script>
+  </header>
+
+  <!-- Main -->
+  <main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 fade-in">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="space-y-3 mb-6">
+          {% for cat, msg in messages %}
+            {% set color = 'bg-green-900/30 border-green-700/50' if cat == 'success' else 'bg-yellow-900/30 border-yellow-700/50' if cat=='warning' else 'bg-red-900/30 border-red-700/50' if cat=='error' else 'bg-slate-800/30 border-slate-700/50' %}
+            <div class="p-4 rounded-lg border {{ color }} flex items-start gap-3">
+              {% if cat == 'success' %}
+                <i class="fa-solid fa-circle-check text-green-400 mt-0.5"></i>
+              {% elif cat == 'warning' %}
+                <i class="fa-solid fa-triangle-exclamation text-yellow-400 mt-0.5"></i>
+              {% elif cat == 'error' %}
+                <i class="fa-solid fa-circle-exclamation text-red-400 mt-0.5"></i>
+              {% else %}
+                <i class="fa-solid fa-info-circle text-blue-400 mt-0.5"></i>
+              {% endif %}
+              <div>{{ msg }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-700/50 mt-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 md:space-y-0">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div>
+          <h3 class="text-lg font-semibold mb-4">MangaViewer</h3>
+          <p class="text-slate-400 text-sm">The best platform to read and share your manga collections.</p>
+        </div>
+        <div>
+          <h4 class="font-medium mb-4">Navigation</h4>
+          <ul class="space-y-2 text-sm text-slate-400">
+            <li><a href="#" class="hover:text-orange-400 transition">Home</a></li>
+            <li><a href="#" class="hover:text-orange-400 transition">Library</a></li>
+            <li><a href="#" class="hover:text-orange-400 transition">Categories</a></li>
+            <li><a href="#" class="hover:text-orange-400 transition">Latest Updates</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-medium mb-4">Legal</h4>
+          <ul class="space-y-2 text-sm text-slate-400">
+            <li><a href="#" class="hover:text-orange-400 transition">Privacy Policy</a></li>
+            <li><a href="#" class="hover:text-orange-400 transition">Terms of Service</a></li>
+            <li><a href="#" class="hover:text-orange-400 transition">DMCA</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-medium mb-4">Connect</h4>
+          <div class="flex gap-3">
+            <a href="#" class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-orange-500 transition">
+              <i class="fa-brands fa-discord"></i>
+            </a>
+            <a href="#" class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-orange-500 transition">
+              <i class="fa-brands fa-twitter"></i>
+            </a>
+            <a href="#" class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-orange-500 transition">
+              <i class="fa-brands fa-github"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+      <div class="border-t border-slate-800 pt-6 text-sm text-slate-500 text-center">
+        <p>Built for *_typeset.png workflows. © 2023 MangaViewer. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

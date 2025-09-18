@@ -1,0 +1,179 @@
+{% extends 'layout.html' %}
+{% block content %}
+  <section class="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-bold mb-2">Latest Updates</h1>
+      <p class="text-slate-400">Recently updated manga</p>
+    </div>
+    <div class="flex gap-2">
+      <div class="relative">
+        <select id="sortFilter" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-300">
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
+          <option value="most_viewed">Most Viewed</option>
+          <option value="alphabetical">A-Z</option>
+        </select>
+      </div>
+      <div class="relative md:hidden">
+        <input type="text" placeholder="Search..." class="search-input w-full">
+        <i class="fa-solid fa-magnifying-glass absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+      </div>
+    </div>
+  </section>
+
+  {% if items %}
+    <div class="mb-4 flex items-center justify-between">
+      <p class="text-sm text-slate-400">{{ meta.total }} manga updated</p>
+      <div class="flex items-center gap-2">
+        <span class="text-sm text-slate-400">View:</span>
+        <div class="flex bg-slate-800 rounded-lg p-1">
+          <button class="p-2 rounded-md hover:bg-slate-700 text-slate-300">
+            <i class="fa-solid fa-grid"></i>
+          </button>
+          <button class="p-2 rounded-md hover:bg-slate-700 text-slate-300">
+            <i class="fa-solid fa-list"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      {% for it in items %}
+        <div class="card overflow-hidden group">
+          <div class="flex">
+            <div class="w-24 h-32 flex-shrink-0">
+              {% if it.cover_url %}
+                <img src="{{ it.cover_url }}" alt="cover" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+              {% else %}
+                <div class="w-full h-full bg-slate-800 flex items-center justify-center">
+                  <i class="fa-solid fa-image text-xl text-slate-500"></i>
+                </div>
+              {% endif %}
+            </div>
+            
+            <div class="flex-1 p-4">
+              <a href="{{ url_for('gallery', code=it.code) }}" class="font-semibold hover:text-orange-400 transition line-clamp-2 mb-2">
+                {{ it.title }}
+              </a>
+              
+              <div class="flex items-center gap-2 text-xs text-slate-400 mb-3">
+                <div class="flex items-center gap-1">
+                  <i class="fa-regular fa-clock"></i>
+                  <span>{{ it.latest_mtime | dt('relative') }}</span>
+                </div>
+                <span>•</span>
+                <div class="flex items-center gap-1">
+                  <i class="fa-solid fa-book"></i>
+                  <span>{{ it.chapters_meta|length }} chapters</span>
+                </div>
+              </div>
+              
+              {% if it.genres %}
+                <div class="flex flex-wrap gap-1 mb-3">
+                  {% for g in it.genres[:3] %}
+                    <span class="chip bg-slate-800 text-xs">{{ g }}</span>
+                  {% endfor %}
+                  {% if it.genres|length > 3 %}
+                    <span class="chip bg-slate-800 text-xs">+{{ it.genres|length - 3 }}</span>
+                  {% endif %}
+                </div>
+              {% endif %}
+              
+              {% if it.description %}
+                <p class="text-sm text-slate-300 line-clamp-2 mb-3">{{ it.description }}</p>
+              {% endif %}
+              
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3 text-xs text-slate-400">
+                  <div class="flex items-center gap-1">
+                    <i class="fa-solid fa-eye"></i>
+                    <span>1.2k</span>
+                  </div>
+                  <div class="flex items-center gap-1 text-amber-400">
+                    <i class="fa-solid fa-star"></i>
+                    <span>4.8</span>
+                  </div>
+                </div>
+                
+                <a href="{{ url_for('gallery', code=it.code) }}" class="text-xs text-orange-400 hover:text-orange-300 transition flex items-center gap-1">
+                  Read
+                  <i class="fa-solid fa-arrow-right text-xs"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+          
+          <div class="px-4 py-3 bg-slate-800/50 border-t border-slate-700/50">
+  <div class="flex items-center justify-between text-xs">
+    <span class="text-slate-400">
+      Latest Chapter: {{ it.latest_chapter or '-' }}
+    </span>
+    <span class="text-slate-400">
+      {{ it.latest_mtime | dt('relative') }}
+    </span>
+  </div>
+</div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="flex items-center justify-center gap-3 mt-10">
+      {% if meta.has_prev %}
+        <a class="btn-outline flex items-center gap-2" href="?page={{ meta.prev_page }}">
+          <i class="fa-solid fa-chevron-left text-xs"></i>
+          <span>Previous</span>
+        </a>
+      {% endif %}
+      
+      <div class="hidden sm:flex items-center gap-1">
+        {% for p in range(1, meta.pages + 1) %}
+          {% if p == meta.page %}
+            <span class="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white">{{ p }}</span>
+          {% else %}
+            <a href="?page={{ p }}" class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-slate-700 transition">{{ p }}</a>
+          {% endif %}
+        {% endfor %}
+      </div>
+      
+      <span class="chip sm:hidden">Page {{ meta.page }} of {{ meta.pages }}</span>
+      
+      {% if meta.has_next %}
+        <a class="btn-outline flex items-center gap-2" href="?page={{ meta.next_page }}">
+          <span>Next</span>
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </a>
+      {% endif %}
+    </div>
+  {% else %}
+    <div class="flex flex-col items-center justify-center py-20 text-center">
+      <div class="w-24 h-24 rounded-full bg-slate-800 flex items-center justify-center mb-6">
+        <i class="fa-solid fa-clock text-3xl text-slate-500"></i>
+      </div>
+      <h3 class="text-xl font-semibold mb-2">No recent updates</h3>
+      <p class="text-slate-400 max-w-md mx-auto">No manga have been updated recently. Check back later for new updates.</p>
+      <div class="flex gap-3 mt-6">
+        <a class="btn" href="{{ url_for('upload') }}">Upload Manga</a>
+        <a class="btn-outline" href="{{ url_for('library') }}">Browse Library</a>
+      </div>
+    </div>
+  {% endif %}
+
+  <style>
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  </style>
+
+  <script>
+    // Filter functionality
+    document.getElementById('sortFilter').addEventListener('change', function() {
+      // In a real implementation, this would reload the page with the sort parameter
+      const sortValue = this.value;
+      console.log('Sort by:', sortValue);
+      // window.location.href = `{{ url_for('latest') }}?sort=${sortValue}`;
+    });
+  </script>
+{% endblock %}

@@ -1,0 +1,200 @@
+{% extends 'layout.html' %}
+{% block content %}
+  <h1 class="text-2xl font-bold mb-4">Upload Halaman & Cover</h1>
+  <form class="card p-5 space-y-4" method="post" enctype="multipart/form-data" id="uploadForm">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm mb-1">Manga Code (slug) — pilih yang sudah ada atau ketik baru</label>
+        <input name="manga_code" id="manga_code" list="manga_list" class="w-full p-2 rounded bg-slate-800 border border-slate-700 text-slate-300" placeholder="mis. one-piece" />
+        <datalist id="manga_list">
+          {% for m in (mangas or []) %}<option value="{{ m }}"></option>{% endfor %}
+        </datalist>
+        <label class="inline-flex items-center gap-2 mt-2 text-sm text-slate-400">
+          <input type="checkbox" name="auto_slug" checked class="accent-orange-500">
+          Auto-slug dari judul (jika kosong)
+        </label>
+      </div>
+      <div>
+        <label class="block text-sm mb-1">Judul (opsional, digunakan untuk auto-slug)</label>
+        <input name="manga_title" id="manga_title" class="w-full p-2 rounded bg-slate-800 border border-slate-700 text-slate-300" placeholder="Judul manga" />
+      </div>
+      <div>
+        <label class="block text-sm mb-1">Chapter</label>
+        <input name="chapter" id="chapter" list="chapter_list" class="w-full p-2 rounded bg-slate-800 border border-slate-700 text-slate-300" placeholder="contoh: 1 atau 1.1" />
+        <datalist id="chapter_list"></datalist>
+        <p id="chapter_hint" class="text-xs text-slate-400 mt-1"></p>
+      </div>
+      <div>
+        <label class="block text-sm mb-1">Cover (opsional, PNG/JPG/JPEG/WEBP)</label>
+        <input type="file" name="cover" accept="image/png,image/jpeg,image/webp" class="w-full text-slate-300" />
+      </div>
+      <div class="sm:col-span-2">
+        <label class="block text-sm mb-1">Genre (pisahkan dengan koma)</label>
+        <div class="flex gap-2">
+          <input name="genres" id="genres" class="flex-1 p-2 rounded bg-slate-800 border border-slate-700 text-slate-300" placeholder="Action, Adventure, Comedy" />
+          <button type="button" id="generateGenres" class="btn-outline whitespace-nowrap flex items-center gap-2">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            Generate AI
+          </button>
+        </div>
+      </div>
+      <div class="sm:col-span-2">
+        <label class="block text-sm mb-1">Deskripsi</label>
+        <textarea name="description" id="description" rows="3" class="w-full p-2 rounded bg-slate-800 border border-slate-700 text-slate-300" placeholder="Deskripsi manga..."></textarea>
+        <div class="flex justify-end mt-1">
+          <button type="button" id="generateDescription" class="btn-outline text-xs flex items-center gap-2">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            Generate AI Description
+          </button>
+        </div>
+      </div>
+      <div class="sm:col-span-2">
+        <label class="block text-sm mb-1">File Halaman (multiple, hanya *_typeset.png)</label>
+        <input type="file" name="files" multiple accept="image/png" class="w-full text-slate-300" />
+        <p class="text-xs text-slate-400 mt-1">Hanya file yang berakhiran <code class="bg-slate-800 px-1 py-0.5 rounded">_typeset.png</code> yang akan disimpan.</p>
+      </div>
+    </div>
+    <div class="flex gap-3">
+      <button class="btn flex items-center gap-2" type="submit">
+        <i class="fa-solid fa-cloud-upload-alt"></i>
+        Upload
+      </button>
+      <button type="button" id="generateAll" class="btn-outline flex items-center gap-2">
+        <i class="fa-solid fa-stars"></i>
+        Generate All with AI
+      </button>
+    </div>
+  </form>
+
+  <script>
+    const codeInput = document.getElementById('manga_code');
+    const titleInput = document.getElementById('manga_title');
+    const chapterInput = document.getElementById('chapter');
+    const genresInput = document.getElementById('genres');
+    const descriptionInput = document.getElementById('description');
+    const chapterList = document.getElementById('chapter_list');
+    const chapterHint = document.getElementById('chapter_hint');
+    const generateGenresBtn = document.getElementById('generateGenres');
+    const generateDescriptionBtn = document.getElementById('generateDescription');
+    const generateAllBtn = document.getElementById('generateAll');
+    const uploadForm = document.getElementById('uploadForm');
+
+    // Fungsi untuk mendapatkan saran chapter
+    async function refreshChapters() {
+      const code = (codeInput.value || '').trim();
+      chapterList.innerHTML = '';
+      chapterHint.textContent = '';
+      if (!code) return;
+      
+      try {
+        const res = await fetch(`/api/chapters/${encodeURIComponent(code)}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        (data.chapters || []).forEach(ch => {
+          const opt = document.createElement('option');
+          opt.value = ch;
+          chapterList.appendChild(opt);
+        });
+        if (data.suggest_next) {
+          chapterHint.textContent = `Saran chapter berikutnya: ${data.suggest_next}`;
+          chapterInput.value = data.suggest_next;
+        } else if ((data.chapters || []).length) {
+          chapterHint.textContent = `Chapter tersedia: ${data.chapters.join(', ')}`;
+        }
+      } catch(e) {
+        console.error('Error fetching chapters:', e);
+      }
+    }
+
+    // Fungsi untuk generate genre dengan AI
+    async function generateGenres() {
+      const title = titleInput.value || codeInput.value;
+      if (!title) {
+        alert('Masukkan judul manga terlebih dahulu');
+        return;
+      }
+
+      generateGenresBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating...';
+      generateGenresBtn.disabled = true;
+
+      try {
+        const response = await fetch('/api/generate-genres', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ title: title })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          genresInput.value = data.genres.join(', ');
+        } else {
+          throw new Error('Failed to generate genres');
+        }
+      } catch (error) {
+        console.error('Error generating genres:', error);
+        alert('Gagal generate genre. Silakan coba lagi.');
+      } finally {
+        generateGenresBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Generate AI';
+        generateGenresBtn.disabled = false;
+      }
+    }
+
+    // Fungsi untuk generate deskripsi dengan AI
+    async function generateDescription() {
+      const title = titleInput.value || codeInput.value;
+      const genres = genresInput.value;
+      
+      if (!title) {
+        alert('Masukkan judul manga terlebih dahulu');
+        return;
+      }
+
+      generateDescriptionBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating...';
+      generateDescriptionBtn.disabled = true;
+
+      try {
+        const response = await fetch('/api/generate-description', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            title: title,
+            genres: genres 
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          descriptionInput.value = data.description;
+        } else {
+          throw new Error('Failed to generate description');
+        }
+      } catch (error) {
+        console.error('Error generating description:', error);
+        alert('Gagal generate deskripsi. Silakan coba lagi.');
+      } finally {
+        generateDescriptionBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Generate AI Description';
+        generateDescriptionBtn.disabled = false;
+      }
+    }
+
+    // Fungsi untuk generate semua dengan AI
+    async function generateAll() {
+      await generateGenres();
+      await generateDescription();
+    }
+
+    // Event listeners
+    codeInput.addEventListener('change', refreshChapters);
+    codeInput.addEventListener('blur', refreshChapters);
+    generateGenresBtn.addEventListener('click', generateGenres);
+    generateDescriptionBtn.addEventListener('click', generateDescription);
+    generateAllBtn.addEventListener('click', generateAll);
+
+    // Inisialisasi saat dokumen dimuat
+    document.addEventListener('DOMContentLoaded', refreshChapters);
+  </script>
+{% endblock %}

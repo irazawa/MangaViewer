@@ -1,0 +1,27 @@
+{% extends 'layout.html' %}
+{% block content %}
+  <div class="mb-4 flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold">{{ code }} — Chapter {{ chapter }}</h1>
+      <a class="text-sm text-sky-400" href="{{ url_for('gallery', code=code) }}">← Kembali ke daftar chapter</a>
+    </div>
+    <div class="flex gap-2">
+      {% if prev_ch %}<a class="btn" href="{{ url_for('view_chapter', code=code, chapter=prev_ch) }}">← Prev</a>{% endif %}
+      {% if next_ch %}<a class="btn" href="{{ url_for('view_chapter', code=code, chapter=next_ch) }}">Next →</a>{% endif %}
+    </div>
+  </div>
+
+  {% if pages %}
+    <div class="space-y-4">
+      {% for f in pages %}
+        <img class="w-full h-auto rounded shadow border border-white/10" loading="lazy" src="{{ url_for('serve_upload', path=code ~ '/' ~ chapter ~ '/' ~ f) }}" alt="{{ f }}">
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-zinc-400">Tidak ada halaman di chapter ini.</p>
+  {% endif %}
+  <div class="flex gap-2">
+      {% if prev_ch %}<a class="btn" href="{{ url_for('view_chapter', code=code, chapter=prev_ch) }}">← Prev</a>{% endif %}
+      {% if next_ch %}<a class="btn" href="{{ url_for('view_chapter', code=code, chapter=next_ch) }}">Next →</a>{% endif %}
+    </div>
+{% endblock %}

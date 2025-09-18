@@ -1,0 +1,56 @@
+{% extends 'layout.html' %}
+{% block content %}
+  <section class="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-bold mb-2">Categories</h1>
+      <p class="text-slate-400">Browse manga by genre</p>
+    </div>
+    <div class="flex gap-2">
+      <div class="relative md:hidden">
+        <input type="text" placeholder="Search genres..." class="search-input w-full">
+        <i class="fa-solid fa-magnifying-glass absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+      </div>
+    </div>
+  </section>
+
+  {% if genres %}
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+      {% for genre in genres %}
+        <a href="{{ url_for('category', genre=genre) }}" class="card p-5 text-center group hover:border-orange-500/30 transition">
+          <div class="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center mx-auto mb-4 group-hover:bg-orange-500 transition">
+            {% if genre == 'Action' %}
+              <i class="fa-solid fa-explosion text-2xl text-orange-400 group-hover:text-white"></i>
+            {% elif genre == 'Adventure' %}
+              <i class="fa-solid fa-mountain-sun text-2xl text-green-400 group-hover:text-white"></i>
+            {% elif genre == 'Comedy' %}
+              <i class="fa-solid fa-face-laugh-squint text-2xl text-yellow-400 group-hover:text-white"></i>
+            {% elif genre == 'Drama' %}
+              <i class="fa-solid fa-masks-theater text-2xl text-purple-400 group-hover:text-white"></i>
+            {% elif genre == 'Fantasy' %}
+              <i class="fa-solid fa-dragon text-2xl text-blue-400 group-hover:text-white"></i>
+            {% elif genre == 'Horror' %}
+              <i class="fa-solid fa-ghost text-2xl text-red-400 group-hover:text-white"></i>
+            {% elif genre == 'Romance' %}
+              <i class="fa-solid fa-heart text-2xl text-pink-400 group-hover:text-white"></i>
+            {% elif genre == 'Sci-Fi' %}
+              <i class="fa-solid fa-rocket text-2xl text-cyan-400 group-hover:text-white"></i>
+            {% else %}
+              <i class="fa-solid fa-book text-2xl text-slate-400 group-hover:text-white"></i>
+            {% endif %}
+          </div>
+          <h3 class="font-semibold mb-1">{{ genre }}</h3>
+          <p class="text-sm text-slate-400">{{ genre_count.get(genre, 0) }} manga</p>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="flex flex-col items-center justify-center py-20 text-center">
+      <div class="w-24 h-24 rounded-full bg-slate-800 flex items-center justify-center mb-6">
+        <i class="fa-solid fa-tags text-3xl text-slate-500"></i>
+      </div>
+      <h3 class="text-xl font-semibold mb-2">No genres found</h3>
+      <p class="text-slate-400 max-w-md mx-auto">No genres have been added yet. Add genres when uploading manga.</p>
+      <a class="btn mt-6" href="{{ url_for('upload') }}">Upload Manga</a>
+    </div>
+  {% endif %}
+{% endblock %}

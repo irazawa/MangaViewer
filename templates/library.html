@@ -1,0 +1,85 @@
+{% extends 'layout.html' %}
+{% block content %}
+  <section class="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-bold mb-2">Library</h1>
+      <p class="text-slate-400">Semua manga dalam koleksi Anda</p>
+    </div>
+    <div class="flex gap-2">
+      <div class="relative md:hidden">
+        <input type="text" placeholder="Search..." class="search-input w-full">
+        <i class="fa-solid fa-magnifying-glass absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+      </div>
+      <a class="btn flex items-center gap-2" href="{{ url_for('upload') }}">
+        <i class="fa-solid fa-plus"></i>
+        <span class="hidden sm:inline">Upload Manga</span>
+      </a>
+    </div>
+  </section>
+
+  {% if items %}
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
+      {% for it in items %}
+        <a href="{{ url_for('gallery', code=it.code) }}" class="card group overflow-hidden">
+          <div class="relative overflow-hidden">
+            {% if it.cover_url %}
+              <img src="{{ it.cover_url }}" alt="cover" class="w-full h-52 object-cover group-hover:scale-105 transition duration-500">
+            {% else %}
+              <div class="w-full h-52 bg-slate-800 flex items-center justify-center text-slate-500">
+                <i class="fa-solid fa-image text-3xl"></i>
+              </div>
+            {% endif %}
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent opacity-0 group-hover:opacity-100 transition"></div>
+            <div class="absolute top-2 left-2">
+              <span class="chip bg-slate-900/80 text-xs">{{ it.total_chapters }} ch</span>
+            </div>
+          </div>
+          <div class="p-3">
+            <div class="font-semibold truncate mb-1">{{ it.title }}</div>
+            <div class="text-xs text-slate-400 flex items-center gap-1">
+              <i class="fa-regular fa-clock"></i>
+              <span>Updated {{ it.latest_mtime | dt }}</span>
+            </div>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+
+    <div class="flex items-center justify-center gap-3 mt-10">
+      {% if meta.has_prev %}
+        <a class="btn-outline flex items-center gap-2" href="?page={{ meta.prev_page }}">
+          <i class="fa-solid fa-chevron-left text-xs"></i>
+          <span>Previous</span>
+        </a>
+      {% endif %}
+      
+      <div class="hidden sm:flex items-center gap-1">
+        {% for p in range(1, meta.pages + 1) %}
+          {% if p == meta.page %}
+            <span class="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white">{{ p }}</span>
+          {% else %}
+            <a href="?page={{ p }}" class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-slate-700 transition">{{ p }}</a>
+          {% endif %}
+        {% endfor %}
+      </div>
+      
+      <span class="chip sm:hidden">Page {{ meta.page }} of {{ meta.pages }}</span>
+      
+      {% if meta.has_next %}
+        <a class="btn-outline flex items-center gap-2" href="?page={{ meta.next_page }}">
+          <span>Next</span>
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </a>
+      {% endif %}
+    </div>
+  {% else %}
+    <div class="flex flex-col items-center justify-center py-20 text-center">
+      <div class="w-24 h-24 rounded-full bg-slate-800 flex items-center justify-center mb-6">
+        <i class="fa-solid fa-book-open text-3xl text-slate-500"></i>
+      </div>
+      <h3 class="text-xl font-semibold mb-2">No manga found</h3>
+      <p class="text-slate-400 max-w-md mx-auto">Your library is empty. Start by uploading your first manga!</p>
+      <a class="btn mt-6" href="{{ url_for('upload') }}">Upload Your First Manga</a>
+    </div>
+  {% endif %}
+{% endblock %}
