@@ -359,7 +359,7 @@ def generate_genres():
         data = request.get_json()
         title = data.get('title', '')
 
-        GEMINI_API_KEY = "AIzaSyDkLBZmzcGJGIOKgVQTUDoA-zH43URt4-8"
+        GEMINI_API_KEY = "KEY"
 
         if GEMINI_API_KEY and GEMINI_API_KEY != 'your-gemini-api-key':
             prompt = f"""
